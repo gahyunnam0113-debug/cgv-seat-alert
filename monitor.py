@@ -53,7 +53,7 @@ def fetch_timetable_via_daiso(cfg: dict[str, Any]) -> list[dict[str, Any]]:
         "/api/cgv/timetable",
         "--keyword",
         keyword,
-        "--theaterId",
+        "--theaterCode",
         str(cfg["theater_code"]),
         "--playDate",
         str(cfg["play_date"]),
