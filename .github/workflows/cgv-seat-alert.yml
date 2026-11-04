@@ -2,7 +2,6 @@ name: CGV seat alert
 
 on:
   schedule:
-    # UTC. KST = UTC+9 → 매 5분
     - cron: "*/5 * * * *"
   workflow_dispatch:
 
@@ -13,10 +12,11 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
       contents: read
       actions: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,36 +37,55 @@ jobs:
             cp config.example.json config.json
           fi
 
-      - name: Restore previous seat state
-        id: cache-restore
+      - name: Restore previous seat states
         uses: actions/cache/restore@v4
         with:
-          path: state.json
+          path: state-*.json
           key: cgv-state-${{ github.run_id }}
           restore-keys: |
             cgv-state-
 
-      - name: Check remaining seats once
+      - name: Check four screenings
         env:
-          # 알림 (Secrets)
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-          NTFY_SERVER: ${{ secrets.NTFY_SERVER }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          # 감시할 상영 — Repo Variables 권장 (Settings → Variables)
-          THEATER_CODE: ${{ vars.THEATER_CODE }}
-          THEATER_KEYWORD: ${{ vars.THEATER_KEYWORD }}
-          THEATER_NAME: ${{ vars.THEATER_NAME }}
-          MOVIE_CODE: ${{ vars.MOVIE_CODE }}
-          MOVIE_NAME: ${{ vars.MOVIE_NAME }}
-          PLAY_DATE: ${{ vars.PLAY_DATE }}
-          START_TIME: ${{ vars.START_TIME }}
-          ALERT_SOURCE: Actions
-        run: python monitor.py --once
+          THEATER_CODE: "0013"
+          THEATER_KEYWORD: "용산아이파크몰"
+          THEATER_NAME: "CGV 용산아이파크몰 IMAX"
+          MOVIE_NAME: "듄"
+          ALERT_SOURCE: "CGV 취소표"
+        run: |
+          check_event() {
+            date="$1"
+            time="$2"
+            safe_time="${time/:/}"
+            state_file="state-${date}-${safe_time}.json"
 
-      - name: Save seat state
-        if: always() && hashFiles('state.json') != ''
+            if [ -f "$state_file" ]; then
+              cp "$state_file" state.json
+            else
+              rm -f state.json
+            fi
+
+            export PLAY_DATE="$date"
+            export START_TIME="$time"
+            export ALERT_SOURCE="CGV 취소표 ${date} ${time}"
+
+            echo "Checking ${date} ${time}"
+            python monitor.py --once || echo "Check failed: ${date} ${time}"
+
+            if [ -f state.json ]; then
+              cp state.json "$state_file"
+            fi
+          }
+
+          check_event "20261111" "08:00"
+          check_event "20261112" "15:00"
+          check_event "20261112" "18:15"
+          check_event "20261112" "21:30"
+
+      - name: Save previous seat states
+        if: always() && hashFiles('state-*.json') != ''
         uses: actions/cache/save@v4
         with:
-          path: state.json
+          path: state-*.json
           key: cgv-state-${{ github.run_id }}
