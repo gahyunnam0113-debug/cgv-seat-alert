@@ -82,7 +82,7 @@ def send_notification(rows):
         url,
         data=message.encode("utf-8"),
         headers={
-            "Title": "CGV 예매 오픈 알림",
+            "Title": "CGV Booking Open",
             "Priority": "high",
             "Tags": "movie_camera,ticket",
             "Content-Type": "text/plain; charset=utf-8",
