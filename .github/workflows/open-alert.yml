@@ -27,6 +27,12 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Diagnose Daiso service
+        continue-on-error: true
+        run: |
+          echo "=== DAISO HEALTH CHECK ==="
+          npx --yes daiso health
+          
       - name: Check CGV booking
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
