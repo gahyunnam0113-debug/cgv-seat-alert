@@ -1,3 +1,4 @@
+import time
 import json
 import os
 import re
@@ -24,6 +25,7 @@ def normalize(text):
 
 def fetch_timetable():
     npx = "npx.cmd" if sys.platform == "win32" else "npx"
+
     cmd = [
         npx, "--yes", "daiso", "get", "/api/cgv/timetable",
         "--keyword", THEATER_KEYWORD,
@@ -32,31 +34,47 @@ def fetch_timetable():
         "--json",
     ]
 
-    proc = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=90,
-    )
+    for attempt in range(1, 4):
+        print(f"CGV 시간표 조회 시도 {attempt}/3")
 
-    if proc.returncode != 0:
-        raise RuntimeError(proc.stderr.strip() or proc.stdout.strip())
+        try:
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=90,
+            )
 
-    raw = proc.stdout.strip()
-    start = raw.find("{")
-    end = raw.rfind("}")
+            raw = proc.stdout.strip()
+            start = raw.find("{")
+            end = raw.rfind("}")
 
-    if start < 0 or end < 0:
-        raise RuntimeError("응답에서 JSON을 찾을 수 없습니다.")
+            if start < 0 or end < 0:
+                raise RuntimeError(
+                    proc.stderr.strip() or "응답에서 JSON을 찾을 수 없습니다."
+                )
 
-    payload = json.loads(raw[start:end + 1])
+            payload = json.loads(raw[start:end + 1])
 
-    if not payload.get("success"):
-        raise RuntimeError(f"CGV API 오류: {payload}")
+            if not payload.get("success"):
+                error = payload.get("error", {})
+                raise RuntimeError(
+                    error.get("message", "CGV 시간표 조회 실패")
+                )
 
-    return payload.get("data", {}).get("timetable") or []
+            return payload.get("data", {}).get("timetable") or []
+
+        except Exception as error:
+            print(f"조회 시도 {attempt} 실패: {error}")
+
+            if attempt == 3:
+                raise RuntimeError(
+                    f"3회 재시도 후에도 조회 실패: {error}"
+                )
+
+            time.sleep(15)
 
 
 def send_notification(rows):
