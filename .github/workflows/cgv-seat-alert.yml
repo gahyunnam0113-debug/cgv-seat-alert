@@ -34,17 +34,17 @@ jobs:
           if [ ! -f config.json ]; then
             cp config.example.json config.json
           fi
-
       - name: Diagnose CGV API
+        continue-on-error: true
         run: |
           echo "=== DAISO HEALTH ==="
           npx --yes daiso health || true
 
           echo "=== CGV MOVIES ==="
-          npx --yes daiso get /api/cgv/movies --keyword "용산아이파크몰" --theaterCode "0013" --playDate "20261111" --json || true
+          npx --yes daiso get /api/cgv/movies --keyword "용산아이파크몰" --theaterCode "0013" --playDate "20261202" --json || true
 
           echo "=== CGV TIMETABLE ==="
-          npx --yes daiso get /api/cgv/timetable --keyword "용산아이파크몰" --theaterCode "0013" --playDate "20261111" --json || true
+          npx --yes daiso get /api/cgv/timetable --keyword "용산아이파크몰" --theaterCode "0013" --playDate "20261202" --json || true
           
       - name: Restore previous seat states
         uses: actions/cache/restore@v4
