@@ -46,3 +46,10 @@ jobs:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
         run: python open_alert.py
 
+      - name: Save alert state
+        if: always() && hashFiles('open_alert_state.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: open_alert_state.json
+          key: cgv-open-alert-${{ github.run_id }}
+
