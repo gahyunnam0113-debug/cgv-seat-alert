@@ -13,7 +13,7 @@ THEATER_CODE = "0013"
 THEATER_KEYWORD = "용산아이파크몰"
 THEATER_NAME = "CGV 용산아이파크몰"
 MOVIE_NAME = "듄: 파트 2"
-PLAY_DATE = "20261209"
+PLAY_DATE = "20261202"
 
 STATE_FILE = Path(__file__).with_name("open_alert_state.json")
 BOOKING_URL = "https://cgv.co.kr/cnm/movieBook"
