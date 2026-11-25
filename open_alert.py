@@ -90,7 +90,7 @@ def send_notification(rows):
     message = (
         f"{MOVIE_NAME} 예매 오픈 감지!\n\n"
         f"극장: {THEATER_NAME}\n"
-        f"날짜: 2026-12-09\n"
+        f"날짜: 2026-12-02\n"
         f"상영 시간: {', '.join(times)}\n\n"
         f"예매 페이지: {BOOKING_URL}"
     )
